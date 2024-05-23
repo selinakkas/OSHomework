@@ -136,3 +136,90 @@ void assign_processes(Process *processes, int num_processes, FILE *output_file) 
         round_robin_scheduling(cpu2_queue_priority3, cpu2_count_priority3, CPU2_QUANTUM_LOW, output_file);
     }
 }
+
+// Sort processes by burst time for SJF scheduling
+void sort_processes_by_burst_time(Process *queue, int count) {
+    int i, j, min_idx;
+
+    for (i = 0; i < count - 1; i++) {
+        min_idx = i;
+        for (j = i + 1; j < count; j++) {
+            if (queue[j].burst_time < queue[min_idx].burst_time) {
+                min_idx = j;
+            }
+        }
+        if (min_idx != i) {
+            Process temp = queue[min_idx];
+            queue[min_idx] = queue[i];
+            queue[i] = temp;
+        }
+    }
+}
+
+// Round Robin scheduling algorithm
+void round_robin_scheduling(Process *queue, int count, int quantum, FILE *output_file) {
+    int time = 0;
+    int remaining_burst_times[MAX_PROCESSES];
+
+    for (int i = 0; i < count; i++) {
+        remaining_burst_times[i] = queue[i].burst_time;
+    }
+
+    while (1) {
+        int done = 1;
+
+        for (int i = 0; i < count; i++) {
+            if (remaining_burst_times[i] > 0) {
+                done = 0;
+
+                if (remaining_burst_times[i] > quantum) {
+                    time += quantum;
+                    remaining_burst_times[i] -= quantum;
+                } else {
+                    time += remaining_burst_times[i];
+                    remaining_burst_times[i] = 0;
+                    fprintf(output_file, "Process %s is completed and terminated.\n", queue[i].name);
+                }
+            }
+        }
+
+        if (done == 1) {
+            break;
+        }
+    }
+}
+
+// Print CPU queues
+void print_cpu_queues(Process *processes, int num_processes) {
+    printf("CPU-1 que1(priority-0) (FCFS)→ ");
+    for (int i = 0; i < num_processes; i++) {
+        if (processes[i].priority == 0 && processes[i].ram <= RAM_SIZE / 4) {
+            printf("%s-", processes[i].name);
+        }
+    }
+    printf("\n");
+
+    printf("CPU-2 que2(priority-1) (SJF)→ ");
+    for (int i = 0; i < num_processes; i++) {
+        if (processes[i].priority == 1) {
+            printf("%s-", processes[i].name);
+        }
+    }
+    printf("\n");
+
+    printf("CPU-2 que3(priority-2) (RR-q8)→ ");
+    for (int i = 0; i < num_processes; i++) {
+        if (processes[i].priority == 2) {
+            printf("%s-", processes[i].name);
+        }
+    }
+    printf("\n");
+
+    printf("CPU-2 que4(priority-3) (RR-q16)→ ");
+    for (int i = 0; i < num_processes; i++) {
+        if (processes[i].priority == 3) {
+            printf("%s-", processes[i].name);
+        }
+    }
+    printf("\n");
+}
